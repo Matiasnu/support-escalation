@@ -1,10 +1,11 @@
 import React, { Component } from "react";
 import axios from "axios";
-import { Card, Header, Form, Input, Icon } from "semantic-ui-react";
+import { Card, Header, Form, Input, Icon, Button } from "semantic-ui-react";
+import "./EscalationApp.css";
 
 let endpoint = "http://localhost:8080";
 
-class ToDoList extends Component {
+class EscalationApp extends Component {
   constructor(props) {
     super(props);
 
@@ -149,8 +150,11 @@ class ToDoList extends Component {
       <div>
         <div className="row">
           <Header className="header" as="h2">
-            TO DO LIST
+            Intraway Support Escalation
           </Header>
+        </div>
+        <div className="button-create">
+            <Button onClick={() => this.onSubmit()}>Create Escalation</Button>
         </div>
         <div className="row">
           <Form onSubmit={this.onSubmit}>
@@ -173,4 +177,4 @@ class ToDoList extends Component {
   }
 }
 
-export default ToDoList;
+export default EscalationApp;
