@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import axios from "axios";
 import { Card, Header, Form, Input, Icon, Button } from "semantic-ui-react";
 import "./EscalationApp.css";
+import { EscalationSupport } from './EscalationSupport';
 
 let endpoint = "http://localhost:8080";
 
@@ -12,6 +13,7 @@ class EscalationApp extends Component {
     this.state = {
       task: "",
       items: [],
+      displayApps: false
     };
   }
 
@@ -154,7 +156,8 @@ class EscalationApp extends Component {
           </Header>
         </div>
         <div className="button-create">
-            <Button onClick={() => this.onSubmit()}>Create Escalation</Button>
+            <Button secondary onClick={this.createEscalation}>Create Escalation</Button>
+            {this.state.displayApps ? <EscalationSupport /> : null}
         </div>
         <div className="row">
           <Form onSubmit={this.onSubmit}>
@@ -175,6 +178,12 @@ class EscalationApp extends Component {
       </div>
     );
   }
+
+  createEscalation = () => {
+    this.setState({
+        displayApps: true
+    })
+}
 }
 
 export default EscalationApp;

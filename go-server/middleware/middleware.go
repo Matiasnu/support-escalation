@@ -19,7 +19,8 @@ import (
 )
 
 // collection object/instance
-var collection *mongo.Collection
+var collectionSupport *mongo.Collection
+var collectionApp *mongo.Collection
 
 // create connection with mongo db
 func init() {
@@ -39,13 +40,14 @@ func loadTheEnv() {
 func createDBInstance() {
 	// DB connection string
 	connectionString := os.Getenv("DB_URI")
-	
+
 	// Database Name
 	dbName := os.Getenv("DB_NAME")
 
 	// Collection name
-	collName := os.Getenv("DB_COLLECTION_NAME")
-	
+	collNameSupport := os.Getenv("DB_COLLECTION_SUPPORT_NAME")
+	collNameApp := os.Getenv("DB_COLLECTION_APP_NAME")
+
 	// Set client options
 	clientOptions := options.Client().ApplyURI(connectionString)
 
@@ -65,34 +67,35 @@ func createDBInstance() {
 
 	fmt.Println("Connected to MongoDB!")
 
-	collection = client.Database(dbName).Collection(collName)
+	collectionSupport = client.Database(dbName).Collection(collNameSupport)
+	collectionApp = client.Database(dbName).Collection(collNameApp)
 
 	fmt.Println("Collection instance created!")
 }
 
-// GetAllTask get all the task route
-func GetAllTask(w http.ResponseWriter, r *http.Request) {
+// GetAllEscalation get all the escalation route
+func GetAllEscalation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	payload := getAllTask()
+	payload := getAllEscalation()
 	json.NewEncoder(w).Encode(payload)
 }
 
-// CreateTask create task route
-func CreateTask(w http.ResponseWriter, r *http.Request) {
+// CreateEscalation create escalation route
+func CreateEscalation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	var task models.SupportEscalation
-	_ = json.NewDecoder(r.Body).Decode(&task)
-	// fmt.Println(task, r.Body)
-	insertOneTask(task)
-	json.NewEncoder(w).Encode(task)
+	var escalation models.SupportEscalation
+	_ = json.NewDecoder(r.Body).Decode(&escalation)
+	// fmt.Println(escalation, r.Body)
+	insertOneEscalation(escalation)
+	json.NewEncoder(w).Encode(escalation)
 }
 
-// TaskComplete update task route
-func TaskComplete(w http.ResponseWriter, r *http.Request) {
+// EscalationComplete update escalation route
+func EscalationComplete(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -100,12 +103,12 @@ func TaskComplete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	params := mux.Vars(r)
-	taskComplete(params["id"])
+	escalationComplete(params["id"])
 	json.NewEncoder(w).Encode(params["id"])
 }
 
-// UndoTask undo the complete task route
-func UndoTask(w http.ResponseWriter, r *http.Request) {
+// UndoEscalation undo the complete escalation route
+func UndoEscalation(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -113,36 +116,36 @@ func UndoTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	params := mux.Vars(r)
-	undoTask(params["id"])
+	undoEscalation(params["id"])
 	json.NewEncoder(w).Encode(params["id"])
 }
 
-// DeleteTask delete one task route
-func DeleteTask(w http.ResponseWriter, r *http.Request) {
+// DeleteEscalation delete one escalation route
+func DeleteEscalation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	params := mux.Vars(r)
-	deleteOneTask(params["id"])
+	deleteOneEscalation(params["id"])
 	json.NewEncoder(w).Encode(params["id"])
-	// json.NewEncoder(w).Encode("Task not found")
+	// json.NewEncoder(w).Encode("Escalation not found")
 
 }
 
-// DeleteAllTask delete all tasks route
-func DeleteAllTask(w http.ResponseWriter, r *http.Request) {
+// DeleteAllEscalation delete all escalations route
+func DeleteAllEscalation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	count := deleteAllTask()
+	count := deleteAllEscalation()
 	json.NewEncoder(w).Encode(count)
-	// json.NewEncoder(w).Encode("Task not found")
+	// json.NewEncoder(w).Encode("Escalation not found")
 
 }
 
-// get all task from the DB and return it
-func getAllTask() []primitive.M {
-	cur, err := collection.Find(context.Background(), bson.D{{}})
+// get all escalation from the DB and return it
+func getAllEscalation() []primitive.M {
+	cur, err := collectionSupport.Find(context.Background(), bson.D{{}})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -167,9 +170,9 @@ func getAllTask() []primitive.M {
 	return results
 }
 
-// Insert one task in the DB
-func insertOneTask(task models.SupportEscalation) {
-	insertResult, err := collection.InsertOne(context.Background(), task)
+// Insert one escalation in the DB
+func insertOneEscalation(escalation models.SupportEscalation) {
+	insertResult, err := collectionSupport.InsertOne(context.Background(), escalation)
 
 	if err != nil {
 		log.Fatal(err)
@@ -178,13 +181,13 @@ func insertOneTask(task models.SupportEscalation) {
 	fmt.Println("Inserted a Single Record ", insertResult.InsertedID)
 }
 
-// task complete method, update task's status to true
-func taskComplete(task string) {
-	fmt.Println(task)
-	id, _ := primitive.ObjectIDFromHex(task)
+// escalation complete method, update escalation's status to true
+func escalationComplete(escalation string) {
+	fmt.Println(escalation)
+	id, _ := primitive.ObjectIDFromHex(escalation)
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{"status": true}}
-	result, err := collection.UpdateOne(context.Background(), filter, update)
+	result, err := collectionSupport.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -192,13 +195,13 @@ func taskComplete(task string) {
 	fmt.Println("modified count: ", result.ModifiedCount)
 }
 
-// task undo method, update task's status to false
-func undoTask(task string) {
-	fmt.Println(task)
-	id, _ := primitive.ObjectIDFromHex(task)
+// escalation undo method, update escalation's status to false
+func undoEscalation(escalation string) {
+	fmt.Println(escalation)
+	id, _ := primitive.ObjectIDFromHex(escalation)
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{"status": false}}
-	result, err := collection.UpdateOne(context.Background(), filter, update)
+	result, err := collectionSupport.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -206,12 +209,12 @@ func undoTask(task string) {
 	fmt.Println("modified count: ", result.ModifiedCount)
 }
 
-// delete one task from the DB, delete by ID
-func deleteOneTask(task string) {
-	fmt.Println(task)
-	id, _ := primitive.ObjectIDFromHex(task)
+// delete one escalation from the DB, delete by ID
+func deleteOneEscalation(escalation string) {
+	fmt.Println(escalation)
+	id, _ := primitive.ObjectIDFromHex(escalation)
 	filter := bson.M{"_id": id}
-	d, err := collection.DeleteOne(context.Background(), filter)
+	d, err := collectionSupport.DeleteOne(context.Background(), filter)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -219,9 +222,9 @@ func deleteOneTask(task string) {
 	fmt.Println("Deleted Document", d.DeletedCount)
 }
 
-// delete all the tasks from the DB
-func deleteAllTask() int64 {
-	d, err := collection.DeleteMany(context.Background(), bson.D{{}}, nil)
+// delete all the escalations from the DB
+func deleteAllEscalation() int64 {
+	d, err := collectionSupport.DeleteMany(context.Background(), bson.D{{}}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -243,7 +246,7 @@ func CreateApp(w http.ResponseWriter, r *http.Request) {
 }
 
 func insertOneApp(task models.AppEscalation) {
-	insertResult, err := collection.InsertOne(context.Background(), task)
+	insertResult, err := collectionApp.InsertOne(context.Background(), task)
 
 	if err != nil {
 		log.Fatal(err)
@@ -255,6 +258,87 @@ func insertOneApp(task models.AppEscalation) {
 func GetAllApp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	payload := getAllTask()
+	payload := getAllApp()
 	json.NewEncoder(w).Encode(payload)
+}
+
+func getAllApp() []primitive.M {
+	cur, err := collectionApp.Find(context.Background(), bson.D{{}})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var results []primitive.M
+	for cur.Next(context.Background()) {
+		var result bson.M
+		e := cur.Decode(&result)
+		if e != nil {
+			log.Fatal(e)
+		}
+		// fmt.Println("cur..>", cur, "result", reflect.TypeOf(result), reflect.TypeOf(result["_id"]))
+		results = append(results, result)
+
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	cur.Close(context.Background())
+	return results
+}
+
+func ModifyEscalationApp(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "PUT")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	params := mux.Vars(r)
+	aplication := r.FormValue("aplication")
+	sspp_level1 := r.FormValue("sspp_level1")
+	sspp_level2 := r.FormValue("sspp_level2")
+	dev_level1 := r.FormValue("dev_level1")
+	dev_level2 := r.FormValue("dev_level2")
+	leader := r.FormValue("leader")
+	modifyEscalationApp(params["id"], aplication, sspp_level1, sspp_level2, dev_level1, dev_level2, leader)
+	json.NewEncoder(w).Encode(params["id"])
+}
+
+func modifyEscalationApp(app string, aplication string, sspp_level1 string, sspp_level2 string, dev_level1 string, dev_level2 string, leader string) {
+	fmt.Println(app)
+	id, _ := primitive.ObjectIDFromHex(app)
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"aplication": aplication, "sspp_level1": sspp_level1, "sspp_level2": sspp_level2, "dev_level1": dev_level1, "dev_level2": dev_level2, "leader": leader}}
+	result, err := collectionApp.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("modified count: ", result.ModifiedCount)
+}
+
+func DeleteApp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	params := mux.Vars(r)
+	deleteOneApp(params["id"])
+	json.NewEncoder(w).Encode(params["id"])
+	// json.NewEncoder(w).Encode("Task not found")
+
+}
+
+func deleteOneApp(escalation string) {
+	fmt.Println(escalation)
+	id, _ := primitive.ObjectIDFromHex(escalation)
+	filter := bson.M{"_id": id}
+	d, err := collectionApp.DeleteOne(context.Background(), filter)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Deleted Document", d.DeletedCount)
 }
